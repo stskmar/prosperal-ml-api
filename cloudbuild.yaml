@@ -1,0 +1,40 @@
+substitutions:
+  _REGION: "asia-southeast2"
+  _REPO: "prosperal-artifacts"
+  _IMAGE_NAME: "inference-job"
+
+steps:
+# 1) build image (using docker builder)
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - build
+  - -t
+  - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE_NAME:$SHORT_SHA"
+  - .
+
+# 2) push image
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - push
+  - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE_NAME:$SHORT_SHA"
+
+# (optional) 3) deploy job (requires gcloud in builder and the service account has run.jobsAdmin)
+# uncomment if you want automatic deployment
+# - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+#   entrypoint: 'bash'
+#   args:
+#   - '-c'
+#   - |
+#     gcloud run jobs replace inference-job --region=$_REGION --image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE_NAME:$SHORT_SHA || \
+#     gcloud run jobs create inference-job --image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE_NAME:$SHORT_SHA --region=$_REGION --tasks=1
+#
+# (optional) 4) execute job automatically (use with caution)
+# - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+#   entrypoint: 'bash'
+#   args:
+#   - '-c'
+#   - |
+#     gcloud run jobs execute inference-job --region=$_REGION --set-env-vars JOB_ID=manual-$SHORT_SHA --tasks=1
+
+images:
+- "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE_NAME:$SHORT_SHA"
