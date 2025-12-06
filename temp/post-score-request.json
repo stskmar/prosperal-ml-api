@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LeadScoringInput",
+  "type": "object",
+  "required": [
+    "age", "job", "marital", "education", "default", "balance",
+    "housing", "loan", "contact", "day", "month",
+    "campaign", "pdays", "previous", "poutcome"
+  ],
+  "properties": {
+    "age": {
+      "type": "integer",
+      "minimum": 18,
+      "maximum": 100,
+      "description": "Usia nasabah"
+    },
+    "job": {
+      "type": "string",
+      "enum": ["admin.", "blue-collar", "entrepreneur", "housemaid", "management", "retired", "self-employed", "services", "student", "technician", "unemployed", "unknown"],
+      "description": "Jenis pekerjaan"
+    },
+    "marital": {
+      "type": "string",
+      "enum": ["divorced", "married", "single"],
+      "description": "Status pernikahan"
+    },
+    "education": {
+      "type": "string",
+      "enum": ["primary", "secondary", "tertiary", "unknown"],
+      "description": "Tingkat pendidikan"
+    },
+    "default": {
+      "type": "string",
+      "enum": ["no", "yes"],
+      "description": "Apakah pernah default kredit"
+    },
+    "balance": {
+      "type": "integer",
+      "description": "Saldo tahunan rata-rata (dalam EUR)"
+    },
+    "housing": {
+      "type": "string",
+      "enum": ["no", "yes"],
+      "description": "Apakah memiliki kredit rumah"
+    },
+    "loan": {
+      "type": "string",
+      "enum": ["no", "yes"],
+      "description": "Apakah memiliki pinjaman personal"
+    },
+    "contact": {
+      "type": "string",
+      "enum": ["cellular", "telephone", "unknown"],
+      "description": "Tipe komunikasi kontak"
+    },
+    "day": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 31,
+      "description": "Hari terakhir kontak dalam bulan"
+    },
+    "month": {
+      "type": "string",
+      "enum": ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"],
+      "description": "Bulan terakhir kontak"
+    },
+    "campaign": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Jumlah kontak selama kampanye ini"
+    },
+    "pdays": {
+      "type": "integer",
+      "minimum": -1,
+      "description": "Hari sejak kontak terakhir dari kampanye sebelumnya (-1 = belum pernah dikontak)"
+    },
+    "previous": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Jumlah kontak sebelum kampanye ini"
+    },
+    "poutcome": {
+      "type": "string",
+      "enum": ["failure", "other", "success", "unknown"],
+      "description": "Hasil kampanye marketing sebelumnya"
+    }
+  }
+}
