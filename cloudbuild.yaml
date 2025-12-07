@@ -3,6 +3,10 @@ substitutions:
   _REPO: "prosperal-artifacts"
   _IMAGE_NAME: "inference-job"
 
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 steps:
 # 1) build image (using docker builder)
 - name: 'gcr.io/cloud-builders/docker'
