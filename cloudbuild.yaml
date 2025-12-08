@@ -3,6 +3,9 @@ substitutions:
   _REPOSITORY: "prosperal-artifacts"
   _IMAGE_NAME: "lead-worker"
 
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 steps:
   - id: "Build"
     name: "gcr.io/cloud-builders/docker"
