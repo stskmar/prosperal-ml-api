@@ -44,4 +44,4 @@ ENV PYTHONUNBUFFERED=1
 ENV TMPDIR=/tmp
 
 # entrypoint
-ENTRYPOINT ["python", "job_runner.py"]
+ENTRYPOINT ["python", "/app/job_runner.py"]
