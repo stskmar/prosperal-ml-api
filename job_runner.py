@@ -87,6 +87,64 @@ def parse_input_path(path: str):
 
     raise ValueError("Unsupported INPUT_PATH format. Use b2:// or https:// or s3://")
 
+# ----------------------
+# Additional helpers (paste after parse_input_path / download_from_b2)
+# ----------------------
+def s3_client_from_env():
+    """
+    Create a boto3 S3 client configured from environment variables:
+      - B2_KEY_ID
+      - B2_APP_KEY
+      - B2_S3_ENDPOINT (optional; must be full https://... endpoint)
+    Returns: boto3 S3 client
+    """
+    key_id = os.environ.get("B2_KEY_ID")
+    app_key = os.environ.get("B2_APP_KEY")
+    endpoint = os.environ.get("B2_S3_ENDPOINT")  # e.g. https://s3.us-west-004.backblazeb2.com
+
+    if not key_id or not app_key:
+        raise RuntimeError("B2_KEY_ID and B2_APP_KEY must be set in env")
+
+    # create session + client
+    session = boto3.session.Session()
+    s3 = session.client(
+        "s3",
+        aws_access_key_id=key_id,
+        aws_secret_access_key=app_key,
+        endpoint_url=endpoint if endpoint else None,
+        config=botocore.client.Config(signature_version="s3v4"),
+    )
+    return s3
+
+
+def parse_b2_path(b2_path: str):
+    """
+    Small convenience wrapper: accept:
+      - b2://bucket/key/...
+      - s3://bucket/key/...
+      - also accept paths returned by parse_input_path (i.e. s3 mode)
+    Returns (bucket, key)
+    Raises ValueError on invalid format.
+    """
+    if not isinstance(b2_path, str):
+        raise ValueError("b2 path must be a string")
+    b2_path = b2_path.strip()
+    if b2_path.startswith("b2://") or b2_path.startswith("s3://"):
+        _, rest = b2_path.split("://", 1)
+        bucket, _, key = rest.partition("/")
+        if not bucket:
+            raise ValueError("invalid b2 path, missing bucket")
+        # key may be empty for a bucket root; return '' in that case
+        return bucket, key
+    # If it's an https URL that matches Backblaze s3-style host, extract bucket/key
+    parsed = urlparse(b2_path)
+    if parsed.scheme in ("http", "https"):
+        host_parts = parsed.netloc.split(".")
+        if len(host_parts) >= 4 and host_parts[1] == "s3":
+            bucket = host_parts[0]
+            key = parsed.path.lstrip("/")
+            return bucket, key
+    raise ValueError("Unsupported B2 path format. Use b2://bucket/key or s3://bucket/key or https s3 endpoint URL")
 
 def download_from_b2(s3_client, input_path: str, local_destination: str, timeout: int = 120):
     """
@@ -130,7 +188,7 @@ def upload_to_b2_atomic(s3, local_path: str, b2_target: str):
     Upload as temp, then copy to final (copy_object) and delete temp.
     This reduces window of partial file exposure.
     """
-    bucket, key = parse_b2_path(b2_target)
+    bucket, key = parse_input_path(b2_target)
     tmp_key = f"{key}.tmp-{uuid.uuid4().hex}"
     logger.info(f"Uploading {local_path} to b2://{bucket}/{tmp_key} (tmp)")
     s3.upload_file(local_path, bucket, tmp_key)
