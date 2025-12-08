@@ -19,12 +19,14 @@ import json
 import logging
 import tempfile
 import uuid
+import requests
 from pathlib import Path
 from datetime import datetime, timezone
 
 import boto3
 import botocore
 import pandas as pd
+from urllib.parse import urlparse
 
 # import your inference module
 from service.inference_service import (
@@ -45,41 +47,83 @@ logger = logging.getLogger("job_runner")
 # ----------------------
 # Helpers - S3 / B2
 # ----------------------
-def parse_b2_path(s: str):
+def parse_input_path(path: str):
     """
-    Expect b2://bucket/path/to/object
-    returns (bucket, key)
+    Parse input path and return a tuple (mode, bucket, key, http_url)
+      - mode: "s3" or "http"
+      - bucket, key: for s3 mode
+      - http_url: for http mode (direct download)
+    Supports:
+      - b2://bucket/key
+      - s3://bucket/key
+      - https://bucket.s3.<region>-004.backblazeb2.com/key...
+      - any https://... (treated as http mode)
     """
-    assert s.startswith("b2://"), "B2 path must start with b2://"
-    parts = s[5:].split("/", 1)
-    bucket = parts[0]
-    key = parts[1] if len(parts) > 1 else ""
-    return bucket, key
+    if not isinstance(path, str):
+        raise ValueError("INPUT_PATH must be a string")
+    path = path.strip()
 
-def s3_client_from_env():
-    endpoint = os.environ.get("B2_S3_ENDPOINT")  # e.g. https://s3.us-west-001.backblazeb2.com
-    key_id = os.environ.get("B2_KEY_ID")
-    app_key = os.environ.get("B2_APP_KEY")
-    if not (key_id and app_key):
-        raise RuntimeError("B2_KEY_ID and B2_APP_KEY must be set in env")
-    session = boto3.session.Session()
-    client = session.client(
-        "s3",
-        endpoint_url=endpoint,
-        aws_access_key_id=key_id,
-        aws_secret_access_key=app_key,
-    )
-    return client
+    # b2:// or s3://
+    if path.startswith("b2://") or path.startswith("s3://"):
+        proto, rest = path.split("://", 1)
+        bucket, _, key = rest.partition("/")
+        if bucket == "" or key == "":
+            raise ValueError("Invalid S3/B2 path (expected b2://bucket/key)")
+        return ("s3", bucket, key, None)
 
-def download_from_b2(s3, b2_path: str, local_path: str):
-    bucket, key = parse_b2_path(b2_path)
-    logger.info(f"Downloading b2://{bucket}/{key} -> {local_path}")
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-    try:
-        s3.download_file(bucket, key, local_path)
-    except botocore.exceptions.ClientError as e:
-        logger.error(f"Failed to download {b2_path}: {e}")
-        raise
+    # https:// or http://
+    parsed = urlparse(path)
+    if parsed.scheme in ("http", "https"):
+        # try to see if host is like "<bucket>.s3.<region>-004.backblazeb2.com"
+        host_parts = parsed.netloc.split(".")
+        if len(host_parts) >= 4 and host_parts[1] == "s3":
+            bucket = host_parts[0]
+            key = parsed.path.lstrip("/")
+            if bucket and key:
+                # use s3 mode (useful if you prefer boto3 download with credentials)
+                return ("s3", bucket, key, None)
+        # fallback: use http download
+        return ("http", None, None, path)
+
+    raise ValueError("Unsupported INPUT_PATH format. Use b2:// or https:// or s3://")
+
+
+def download_from_b2(s3_client, input_path: str, local_destination: str, timeout: int = 120):
+    """
+    Download the file pointed by input_path into local_destination.
+    Accepts s3:// or b2:// or https:// URLs.
+    - s3 mode uses s3_client.download_file(bucket, key, local_destination)
+    - http mode uses requests.get
+    """
+    mode, bucket, key, http_url = parse_input_path(input_path)
+
+    if mode == "s3":
+        # ensure bucket/key present
+        if not bucket or not key:
+            raise RuntimeError("Invalid S3/B2 path parsed")
+        # Use boto3 client's download_file (handles credentials from env)
+        try:
+            s3_client.download_file(bucket, key, local_destination)
+            return local_destination
+        except Exception as e:
+            # if download_file fails, raise informative error
+            raise RuntimeError(f"S3 download failed for {bucket}/{key}: {e}")
+
+    elif mode == "http":
+        # HTTP(S) GET, stream to file
+        try:
+            resp = requests.get(http_url, stream=True, timeout=timeout)
+            resp.raise_for_status()
+            with open(local_destination, "wb") as fh:
+                for chunk in resp.iter_content(chunk_size=8192):
+                    if chunk:
+                        fh.write(chunk)
+            return local_destination
+        except Exception as e:
+            raise RuntimeError(f"HTTP download failed for {http_url}: {e}")
+
+    else:
+        raise RuntimeError(f"Unsupported mode from parse_input_path: {mode}")
 
 def upload_to_b2_atomic(s3, local_path: str, b2_target: str):
     """
