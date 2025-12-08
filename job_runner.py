@@ -100,18 +100,21 @@ def s3_client_from_env():
     """
     key_id = os.environ.get("B2_KEY_ID")
     app_key = os.environ.get("B2_APP_KEY")
-    endpoint = os.environ.get("B2_S3_ENDPOINT")  # e.g. https://s3.us-west-004.backblazeb2.com
+    endpoint = os.environ.get("B2_S3_ENDPOINT", "https://s3.us-west-004.backblazeb2.com")
 
     if not key_id or not app_key:
         raise RuntimeError("B2_KEY_ID and B2_APP_KEY must be set in env")
+
+    logger.info(f"S3 client config: endpoint={endpoint}, key_id={key_id[:10]}...")
 
     # create session + client
     session = boto3.session.Session()
     s3 = session.client(
         "s3",
+        region_name="us-west-004",
         aws_access_key_id=key_id,
         aws_secret_access_key=app_key,
-        endpoint_url=endpoint if endpoint else None,
+        endpoint_url=endpoint,
         config=botocore.client.Config(signature_version="s3v4"),
     )
     return s3
