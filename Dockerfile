@@ -27,10 +27,9 @@ COPY --chown=appuser:appuser --from=build /wheels /wheels
 RUN pip install --no-cache-dir /wheels/*
 
 # copy app code
-COPY --chown=appuser:appuser service/inference_service.py ./inference_service.py
-COPY --chown=appuser:appuser service/ ./service/
-COPY --chown=appuser:appuser job_runner.py ./job_runner.py
-
+COPY --chown=appuser:appuser service/inference_service.py /app/inference_service.py
+COPY --chown=appuser:appuser service/ /app/service/
+COPY --chown=appuser:appuser job_runner.py /app/job_runner.py
 # ensuring path
 WORKDIR /app
 
