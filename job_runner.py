@@ -256,7 +256,11 @@ def main():
         download_from_b2(s3, INPUT_PATH, tmp_input)
 
         # 4) Read CSV and validate/clean
-        df = pd.read_csv(tmp_input)
+        # Try to detect delimiter (semicolon or comma)
+        with open(tmp_input, 'r', encoding='utf-8') as f:
+            first_line = f.readline()
+        delimiter = ';' if ';' in first_line else ','
+        df = pd.read_csv(tmp_input, sep=delimiter)
         total_rows = len(df)
         validation = validate_dataframe_columns(df)
         if validation["missing_columns"]:
