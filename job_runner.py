@@ -191,7 +191,8 @@ def upload_to_b2_atomic(s3, local_path: str, b2_target: str):
     Upload as temp, then copy to final (copy_object) and delete temp.
     This reduces window of partial file exposure.
     """
-    bucket, key = parse_input_path(b2_target)
+    # parse_b2_path returns (bucket, key) which matches what we need here
+    bucket, key = parse_b2_path(b2_target)
     tmp_key = f"{key}.tmp-{uuid.uuid4().hex}"
     logger.info(f"Uploading {local_path} to b2://{bucket}/{tmp_key} (tmp)")
     s3.upload_file(local_path, bucket, tmp_key)
