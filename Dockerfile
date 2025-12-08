@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace
+WORKDIR /app
 
 # copy requirements (you may maintain requirements.txt in repo)
 COPY service/requirements.txt ./requirements.txt
