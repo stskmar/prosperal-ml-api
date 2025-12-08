@@ -1,74 +1,25 @@
 # cloudbuild.yaml
 substitutions:
   _REGION: "asia-southeast2"
-  _REPOSITORY: "ml-batch"
+  _REPOSITORY: "prosperal-artifacts"
   _IMAGE_NAME: "lead-worker"
 
 steps:
-# 1) Build and push image
-- name: 'gcr.io/cloud-builders/docker'
-  id: Build
-  args:
-  - 'build'
-  - '-t'
-  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA'
-  - '.'
+  - id: "Build"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-f"
+      - "job.Dockerfile"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA"
+      - "."
 
-- name: 'gcr.io/cloud-builders/docker'
-  id: Push
-  args:
-  - 'push'
-  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA'
-
-# 2) Replace/create Cloud Run Job using gcloud
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-  id: "Deploy Job Definition"
-  entrypoint: bash
-  args:
-  - -c
-  - |
-    set -e
-    IMAGE="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA"
-    JOB_NAME="lead-scoring-job"
-    REGION="${_REGION}"
-
-    echo "Creating or replacing job definition: $JOB_NAME -> $IMAGE"
-
-    # If a job exists, replace it. If not, create it.
-    if gcloud run jobs describe "$JOB_NAME" --region="$REGION" >/dev/null 2>&1; then
-      echo "Job exists — replace"
-      gcloud run jobs replace --image "$IMAGE" --region="$REGION" --file=- <<EOF
-apiVersion: run.googleapis.com/v1
-kind: Job
-metadata:
-  name: $JOB_NAME
-spec:
-  template:
-    spec:
-      containers:
-      - image: $IMAGE
-        env:
-        - name: TMP_DIR
-          value: "/tmp"
-      taskCount: 1
-EOF
-    else
-      echo "Job does not exist — create"
-      gcloud run jobs create "$JOB_NAME" --image "$IMAGE" --region="$REGION" --tasks=1 --max-retries=1 --service-account="$PROJECT_NUMBER-compute@developer.gserviceaccount.com" || true
-    fi
-
-# 3) (Optional) Execute Job immediately - commented out by default
-# - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-#   id: "Execute Job"
-#   entrypoint: bash
-#   args:
-#   - -c
-#   - |
-#     REGION="${_REGION}"
-#     JOB_NAME="lead-scoring-job"
-#     gcloud run jobs execute $JOB_NAME --region=$REGION \
-#       --set-env-vars=INPUT_PATH=b2://your-bucket/input/test.csv,OUTPUT_PREFIX=outputs/$(date -u +%Y%m%d-%H%M%S) \
-#       --set-secrets=B2_KEY_ID=projects/$PROJECT_ID/secrets/B2_KEY_ID:latest,B2_APP_KEY=projects/$PROJECT_ID/secrets/B2_APP_KEY:latest
+  - id: "Push"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA"
 
 images:
-- '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA'
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA"
