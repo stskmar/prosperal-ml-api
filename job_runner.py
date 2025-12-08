@@ -220,6 +220,7 @@ def main():
 
         logger.info("Starting batch worker")
         logger.info(f"INPUT_PATH={INPUT_PATH}, OUTPUT_PREFIX={OUTPUT_PREFIX}, ARTIFACTS_PREFIX={ARTIFACTS_PREFIX}")
+        logger.info(f"ENV present: B2_KEY_ID={'B2_KEY_ID' in os.environ}, B2_APP_KEY={'B2_APP_KEY' in os.environ}, B2_S3_ENDPOINT={'B2_S3_ENDPOINT' in os.environ}")
 
         s3 = s3_client_from_env()
 
