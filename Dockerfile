@@ -1,44 +1,28 @@
-# Stage 1: build
-FROM python:3.11-slim AS build
-
-# system deps for common numeric libs
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# copy requirements (you may maintain requirements.txt in repo)
-COPY service/requirements.txt ./requirements.txt
-RUN pip install --upgrade pip
-RUN pip wheel --no-deps --wheel-dir=/wheels -r requirements.txt
+# Stage 1 omitted (same)
 
 # Stage 2: final
 FROM python:3.11-slim
 
-WORKDIR /app
+# set WORKDIR to /workspace to match runtime logs
+WORKDIR /workspace
 
 # create non-root user (recommended)
 RUN useradd --create-home appuser
 USER appuser
 
-# copy wheels and install
+# copy wheels and install (ensure these paths still exist)
 COPY --chown=appuser:appuser --from=build /wheels /wheels
 RUN pip install --no-cache-dir /wheels/*
 
-# copy app code
-COPY --chown=appuser:appuser service/inference_service.py ./inference_service.p
+# copy app code (fix the typo)
+COPY --chown=appuser:appuser service/inference_service.py ./inference_service.py
 COPY --chown=appuser:appuser service/ ./service/
 COPY --chown=appuser:appuser job_runner.py ./job_runner.py
 
-# COPY artifacts into ./artifacts (so load_artifacts("./artifacts") finds them)
-COPY service/artifacts/ ./artifacts/
+# copy artifacts into /workspace/artifacts (exact path code expects)
+COPY --chown=appuser:appuser service/artifacts/ ./artifacts/
 
-# working dir
 ENV PYTHONUNBUFFERED=1
 ENV TMPDIR=/tmp
 
-# entrypoint
 ENTRYPOINT ["python", "job_runner.py"]
