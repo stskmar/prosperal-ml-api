@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LeadScoringOutput",
+  "type": "object",
+  "required": [
+    "probability", "prediction", "prediction_label", "risk_level", "reason_codes"
+  ],
+  "properties": {
+    "probability": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Probabilitas nasabah akan subscribe (0.0 - 1.0)"
+    },
+    "prediction": {
+      "type": "integer",
+      "enum": [0, 1],
+      "description": "Prediksi binary (0 = tidak subscribe, 1 = subscribe)"
+    },
+    "prediction_label": {
+      "type": "string",
+      "enum": ["no", "yes"],
+      "description": "Label prediksi dalam format string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["Low", "Medium", "High"],
+      "description": "Level konversi berdasarkan probability"
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["feature", "contribution"],
+        "properties": {
+          "feature": {
+            "type": "string",
+            "description": "Nama fitur yang berpengaruh"
+          },
+          "contribution": {
+            "type": "string",
+            "enum": ["positive", "negative"],
+            "description": "Arah kontribusi terhadap prediksi positif"
+          }
+        }
+      },
+      "minItems": 5,
+      "maxItems": 5,
+      "description": "Top 5 fitur paling berpengaruh dengan arah kontribusinya"
+    }
+  }
+}

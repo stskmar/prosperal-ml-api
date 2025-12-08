@@ -1,0 +1,81 @@
+{
+  "model_name": "CatBoost",
+  "model_version": "v2.0",
+  "training_date": "2025-12-04 13:18:11",
+  "test_roc_auc_calibrated": 0.804644341410466,
+  "test_roc_auc_uncalibrated": 0.8043741632763699,
+  "test_pr_auc": 0.45226929669659743,
+  "best_cv_auc": 0.7974977241715923,
+  "best_params": {
+    "depth": 6,
+    "iterations": 100,
+    "learning_rate": 0.2
+  },
+  "feature_count": 19,
+  "features": [
+    "age",
+    "job",
+    "marital",
+    "education",
+    "default",
+    "balance",
+    "housing",
+    "loan",
+    "contact",
+    "day",
+    "month",
+    "campaign",
+    "pdays",
+    "previous",
+    "poutcome",
+    "age_group",
+    "prev_success",
+    "campaign_intensity",
+    "season"
+  ],
+  "training_samples": 36168,
+  "test_samples": 9043,
+  "uplift_metrics": {
+    "top_10_pct_capture_rate": 44.32892249527411,
+    "top_20_pct_capture_rate": 63.13799621928167,
+    "top_30_pct_capture_rate": 71.9281663516068,
+    "top_50_pct_capture_rate": 83.5538752362949
+  },
+  "cost_matrix_metrics": {
+    "optimal_threshold": 0.1,
+    "optimal_top_x_percent": 27.5572265840982,
+    "maximum_expected_profit": 69930000.0
+  },
+  "prediction_schema": {
+    "id_field": "customer_id",
+    "score_field": "probability",
+    "rank_field": "rank"
+  },
+  "worker_config": {
+    "batch_size": 128,
+    "max_retries": 3,
+    "timeout_sec": 300
+  },
+  "preprocessing_steps": {
+    "duration_removed": true,
+    "categorical_encoding": "LabelEncoder",
+    "numeric_scaler": "StandardScaler",
+    "calibration": "CalibratedClassifierCV (Isotonic)",
+    "class_imbalance_handling": "class_weight/scale_pos_weight"
+  },
+  "new_features_v2": [
+    "Cost Matrix Simulation",
+    "Reason Codes (Top-5 SHAP per customer)",
+    "Single Input Inference Function"
+  ],
+  "python_version": "3.x",
+  "dependencies": {
+    "catboost": "latest",
+    "xgboost": "latest",
+    "lightgbm": "latest",
+    "scikit-learn": "latest",
+    "shap": "latest",
+    "pandas": "latest",
+    "numpy": "latest"
+  }
+}
