@@ -122,7 +122,7 @@ def main():
         s3 = s3_client_from_env()
 
         # 1) Download artifacts (if ARTIFACTS_PREFIX set) into local ./artifacts
-        local_artifacts_dir = Path("/workspace/artifacts")
+        local_artifacts_dir = Path("/app/artifacts")
         if ARTIFACTS_PREFIX:
             # Expect ARTIFACTS_PREFIX points to a folder with required files
             local_artifacts_dir.mkdir(parents=True, exist_ok=True)
