@@ -33,6 +33,9 @@ COPY --chown=appuser:appuser service/inference_service.py ./inference_service.p
 COPY --chown=appuser:appuser service/ ./service/
 COPY --chown=appuser:appuser job_runner.py ./job_runner.py
 
+# COPY artifacts into ./artifacts (so load_artifacts("./artifacts") finds them)
+COPY service/artifacts/ ./artifacts/
+
 # working dir
 ENV PYTHONUNBUFFERED=1
 ENV TMPDIR=/tmp
