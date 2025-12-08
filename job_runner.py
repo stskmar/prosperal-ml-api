@@ -108,7 +108,7 @@ def main():
         # ENV config
         INPUT_PATH = os.environ.get("INPUT_PATH")
         OUTPUT_PREFIX = os.environ.get("OUTPUT_PREFIX", "outputs/" + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S"))
-        ARTIFACTS_PREFIX = os.environ.get("ARTIFACTS_PREFIX")  # e.g. artifacts/lead-v1
+        ARTIFACTS_PREFIX = os.environ.get("ARTIFACTS_PREFIX")
         TMP_DIR = os.environ.get("TMP_DIR", "/tmp")
         SCHEMA_VERSION = os.environ.get("SCHEMA_VERSION", "1.0")
         MODEL_VERSION = os.environ.get("MODEL_VERSION", "unknown")
