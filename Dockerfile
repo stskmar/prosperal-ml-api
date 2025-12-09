@@ -34,6 +34,8 @@ COPY --chown=appuser:appuser service/ ./service/
 # jika job_runner.py ada di root, juga copy itu
 COPY --chown=appuser:appuser job_runner.py ./job_runner.py
 
+# copy bundled artifacts into the path job_runner expects
+COPY --chown=appuser:appuser service/artifacts/ /workspace/artifacts/
 
 # working dir
 ENV PYTHONUNBUFFERED=1
