@@ -18,8 +18,6 @@ RUN pip wheel --no-deps --wheel-dir=/wheels -r requirements.txt
 # Stage 2: final
 FROM python:3.11-slim
 
-WORKDIR /app
-
 # create non-root user (recommended)
 RUN useradd --create-home appuser
 USER appuser
@@ -42,4 +40,4 @@ ENV PYTHONUNBUFFERED=1
 ENV TMPDIR=/tmp
 
 # entrypoint
-ENTRYPOINT ["python", "job_runner.py"]
+ENTRYPOINT ["python", "/app/job_runner.py"]
