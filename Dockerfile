@@ -27,13 +27,16 @@ COPY --chown=appuser:appuser --from=build /wheels /wheels
 RUN pip install --no-cache-dir /wheels/*
 
 # copy app code
-COPY --chown=appuser:appuser service/inference_service.py ./inference_service.p
-COPY --chown=appuser:appuser service/ ./service/
-# jika job_runner.py ada di root, juga copy itu
-COPY --chown=appuser:appuser job_runner.py ./job_runner.py
+COPY --chown=appuser:appuser service/inference_service.py /app/inference_service.py
+COPY --chown=appuser:appuser service/ /app/service/
+COPY --chown=appuser:appuser job_runner.py /app/job_runner.py
+# ensuring path
+WORKDIR /app
 
-# copy bundled artifacts into the path job_runner expects
-COPY --chown=appuser:appuser service/artifacts/ /workspace/artifacts/
+# copy artifacts into absolute path /app/artifacts
+COPY --chown=appuser:appuser service/artifacts/ /app/artifacts/
+RUN chmod -R a+r /app/artifacts || true
+RUN chmod -R a+r ./artifacts || true
 
 # working dir
 ENV PYTHONUNBUFFERED=1
